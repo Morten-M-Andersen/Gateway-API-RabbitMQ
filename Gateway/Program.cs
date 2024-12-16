@@ -11,7 +11,7 @@ Env.Load();
 var seqUrl = builder.Configuration.GetValue<string>("Seq:Url") ?? "http://localhost:5341";
 
 Log.Logger = new LoggerConfiguration()
-    //.MinimumLevel.Debug() //logger ALT
+    //.MinimumLevel.Information() //skift mellem ".Information()", ".Error()", "Warning()", eller ".Debug()" afhængig af hvor meget skal logges
     .Enrich.WithCorrelationId() // specifickt fra Serilog.Enricher.CorrelationId (ekstra NuGet)
     .WriteTo.Console()  // log skrives til konsol
     .WriteTo.Seq(seqUrl)   // URL til Seq

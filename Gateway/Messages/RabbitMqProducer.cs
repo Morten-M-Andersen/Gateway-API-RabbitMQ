@@ -1,4 +1,6 @@
 ﻿using RabbitMQ.Client;
+using RabbitMQ.Client.Exceptions;
+using Microsoft.Extensions.Logging;
 using System.Text;
 using System.Text.Json;
 using System.Threading.Tasks;
@@ -8,9 +10,12 @@ namespace Gateway.Messages
     public class RabbitMqProducer : IMessageProducer
     {
         private readonly IConnectionFactory _connectionFactory;
+        private readonly ILogger<RabbitMqProducer> _logger;
 
-        public RabbitMqProducer()
+        public RabbitMqProducer(ILogger<RabbitMqProducer> logger)
         {
+            _logger = logger;
+
             // Konfigurer connection factory
             _connectionFactory = new ConnectionFactory
             {
@@ -22,35 +27,58 @@ namespace Gateway.Messages
         }
         public async Task SendMessage<T>(T message)
         {
-            //var factory = new ConnectionFactory { HostName = "localhost" };
-            //var connection = factory.CreateConnection();
-            await using var connection = await _connectionFactory.CreateConnectionAsync(new List<string> { "localhost" }); // Angiv værter (hosts) som liste
-            await using var channel = await connection.CreateChannelAsync();
+            _logger.LogInformation("Starting to send message to RabbitMQ.");    // sæt til f.eks. .MinimumLevel.Information() i Program.cs for at få disse beskeder i logs
 
-            await channel.QueueDeclareAsync(
-                queue: "add-book-queue",
-                durable: true,
-                exclusive: false,
-                autoDelete: false,
-                arguments: null);
-
-            // Create persistent properties for the message
-            var properties = new BasicProperties
+            try
             {
-                Persistent = true
-            };
+                await using var connection = await _connectionFactory.CreateConnectionAsync(new List<string> { "localhost" }); // Angiv værter (hosts) som liste
+                _logger.LogInformation("Connection to RabbitMQ established.");
 
-            // Serialize and send
+                await using var channel = await connection.CreateChannelAsync();
+                _logger.LogInformation("RabbitMQ channel created.");
 
-            var bookJson = JsonSerializer.Serialize(message);
-            var body = Encoding.UTF8.GetBytes(bookJson);
+                await channel.QueueDeclareAsync(
+                    queue: "add-book-queue",
+                    durable: true,
+                    exclusive: false,
+                    autoDelete: false,
+                    arguments: null);
+                _logger.LogInformation("Queue 'add-book-queue' declared.");
 
-            await channel.BasicPublishAsync(
-                exchange: string.Empty,
-                routingKey: "book.add.webshop",
-                mandatory: true,
-                basicProperties: properties,
-                body: body);
+                // Create persistent properties for the message
+                var properties = new BasicProperties
+                {
+                    Persistent = true
+                };
+
+                // Serialize and send
+
+                var bookJson = JsonSerializer.Serialize(message);
+                var body = Encoding.UTF8.GetBytes(bookJson);
+
+                await channel.BasicPublishAsync(
+                    exchange: string.Empty,
+                    routingKey: "book.add.webshop",
+                    mandatory: true,
+                    basicProperties: properties,
+                    body: body);
+                _logger.LogInformation("Message successfully published to RabbitMQ: {Message}", bookJson);
+            }
+            catch (BrokerUnreachableException ex)
+            {
+                _logger.LogError(ex, "Failed to connect to RabbitMQ.");
+                throw;
+            }
+            catch (OperationInterruptedException ex)
+            {
+                _logger.LogError(ex, "RabbitMQ operation interrupted.");
+                throw;
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "An error occurred while sending a message to RabbitMQ.");
+                throw;
+            }
         }
     }
 }
