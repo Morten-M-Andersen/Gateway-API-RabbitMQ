@@ -1,0 +1,121 @@
+¤¤¤
+Generelle trin
+
+    Start Docker Desktop.
+    Kør docker compose up -d for at starte Seq.
+    Åbn dashboardet på http://localhost:5341.
+    Tjek containerens status med docker compose ps.
+    Fjern containeren med docker compose down, hvis nødvendigt.
+
+¤¤¤
+Opsætning af logging med Serilog og Seq
+Installerede NuGet-pakker
+
+    Serilog.AspNetCore                  : Integration af Serilog i ASP.NET Core.
+    Serilog.Sinks.Seq                   : Sender logs til Seq.
+    Serilog.Enrichers.CorrelationId     : Tilføjer korrelations-ID'er for at spore logs på tværs af tjenester.
+        Bemærk: Jeg har ikke udforsket detaljerne omkring CorrelationId endnu.
+
+¤¤¤
+Seq Opsætning
+Persistens af logs
+
+    Logs gemmes lokalt via bind mount i Docker.
+    Opsætning i docker-compose.yml:
+
+volumes:
+  - c:/repos/seq-data:/data
+
+Bemærk: Mappen c:/repos/seq-data skal eksistere. Du kan oprette den med:
+
+    mkdir -p c:/repos/seq-data
+
+    Alternativt kan data gemmes internt i Docker, men dette gør dem sværere at finde manuelt.
+
+¤¤¤
+Start Seq Container
+
+    Sørg for, at Docker Desktop kører.
+    Start Seq-containeren med:
+
+    docker compose up -d
+
+        -d betyder, at containeren kører i baggrunden.
+        Dette starter en Docker "Stack". For at se containeren skal du udfolde stakken i Docker Desktop.
+
+Tjek og administrer containeren
+
+    Tjek status for containeren:
+
+docker compose ps
+
+Stop og fjern containeren:
+
+    docker compose down
+
+¤¤¤
+Seq URL
+
+    Dashboard: http://localhost:5341
+    Logging URL (tilføjet i appsettings.development.json): http://localhost:5341
+
+Admin Password
+
+    Gemmer du password som plain text i .yml-filen, kan dette undgås ved at bruge et hash:
+        Generér en hashet værdi:
+
+echo 'admin' | docker run --rm -i datalust/seq config hash
+
+Outputtet (f.eks. 8c6976e5b5410415bde908bd4dee15dfb167a4feca634372a8c1f68102d4f4f9) kan bruges i stedet for plain text:
+
+        -e SEQ_FIRSTRUN_ADMINPASSWORDHASH="8c6976e5b5410415bde908bd4dee15dfb167a4feca634372a8c1f68102d4f4f9"
+
+
+¤¤¤
+Links til dokumentation
+
+    Mere info om Seq Docker containeren her: https://hub.docker.com/r/datalust/seq
+    Mere om Seq generelt her: https://datalust.co/seq
+
+
+¤¤¤
+Bemærkninger
+
+    Vi overvejer at bruge hash til admin-password i stedet for plain text for bedre sikkerhed.
+    Lokale logs kan nemt findes og demonstreres ved hjælp af den bind mount-konfigurerede mappe.
+
+
+¤¤¤
+Åbn RabbitMQ Management UI:
+
+    URL: http://localhost:15672.
+    Brug user og password fra docker-compose som loginoplysninger. ("admin"/"admin")
+
+¤¤¤
+RabbitMQ tilføjet til docker-compose.yml
+
+¤¤¤
+Opsætning af RabbitMQ
+Installerede NuGet-pakker
+
+    RabbitMQ.Client
+
+    (dotnet add package RabbitMQ.Client)
+
+¤¤¤
+Brug af .env-fil til miljøvariabler
+(for at undgå at dele den slags hemmeligheder ved at de står i f.eks. appsettings.Developer.json)
+
+Docker Compose understøtter .env-filer til at definere miljøvariabler. Disse kan bruges til at holde dine passwords ude af docker-compose.yml.
+Opret en .env-fil
+
+    I samme mappe som din docker-compose.yml, opret en fil med navnet .env.
+
+    Tilføj følgende indhold:
+
+RABBITMQ_DEFAULT_USER=admin
+RABBITMQ_DEFAULT_PASS=admin
+
+Bemærk: Undlad at tilføje .env-filen til versioneringssystemer som Git ved at tilføje den til .gitignore.
+
+¤¤¤

@@ -1,0 +1,31 @@
+services:
+  seq:
+    image: datalust/seq
+    container_name: serilog-seq
+    restart: unless-stopped
+    environment:
+      ACCEPT_EULA: "Y"
+      SEQ_FIRSTRUN_ADMINPASSWORD: "admin"
+    ports:
+      - "5341:80"
+    volumes:
+      - c:/repos/seq-data:/data
+
+  rabbitmq:
+    image: rabbitmq:3-management
+    container_name: rabbitmq
+    restart: unless-stopped
+    ports:
+      - "5672:5672"   # RabbitMQ server (bruges af applikationer)
+      - "15672:15672" # RabbitMQ Management UI
+    environment:
+      RABBITMQ_DEFAULT_USER: guest
+      RABBITMQ_DEFAULT_PASS: guest
+      #RABBITMQ_DEFAULT_USER: ${RABBITMQ_DEFAULT_USER} # (se noter.txt) Gemt i en .env fil i projektmappen - denne deles IKKE til GitHub pga. sidste linje i .gitignore-filen.
+      #RABBITMQ_DEFAULT_PASS: ${RABBITMQ_DEFAULT_PASS} # (se noter.txt) Gemt i en .env fil i projektmappen - denne deles IKKE til GitHub pga. sidste linje i .gitignore-filen.
+    networks:
+      - my_network
+
+networks:
+  my_network:
+    driver: bridge
