@@ -1,4 +1,5 @@
 using Serilog;
+using Serilog.Enrichers.CorrelationId;
 using DotNetEnv;
 using Gateway.Messages;
 
