@@ -35,11 +35,11 @@ namespace Gateway.Controllers
                 // Log input til debugging
                 Log.Information($"Received Book: " +
                     $"ISBN: {addBook.ISBN}, " +
-                    $"ISBN_13: {addBook.ISBN_secondary}, " +
+                    //$"ISBN_13: {addBook.ISBN_secondary}, " +
                     $"Title: {addBook.Title}, " +
-                    $"Author: {addBook.Author}, " +
-                    $"Seller: {addBook.Seller_Name}, " +
-                    $"Price: {addBook.Price}"
+                    $"Author: {addBook.Author}"//, " +
+                    //$"Seller: {addBook.Seller_Name}, " +
+                    //$"Price: {addBook.Price}"
                 );
                 // Sender addBook
                 await _messageProducer.SendMessage(addBook);

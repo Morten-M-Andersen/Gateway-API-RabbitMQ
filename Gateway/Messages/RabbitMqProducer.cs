@@ -58,7 +58,7 @@ namespace Gateway.Messages
 
                 await channel.BasicPublishAsync(
                     exchange: string.Empty,
-                    routingKey: "book.add.webshop",
+                    routingKey: "add-book-queue",
                     mandatory: true,
                     basicProperties: properties,
                     body: body);
